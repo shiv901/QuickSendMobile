@@ -41,6 +41,13 @@ export const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 10,
+  },
+  callButton: {
+    backgroundColor: '#4CAF50', // Green color for call button
+    padding: 15,
+    borderRadius: 5,
+    flex: 0.45,
   },
   whatsappButton: {
     backgroundColor: '#25d366',
@@ -57,6 +64,8 @@ export const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     textAlign: 'center',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   modalContainer: {
     position: 'absolute',

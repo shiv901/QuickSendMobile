@@ -9,6 +9,7 @@ import {
   Platform,
   Text,
   TextInput,
+  ToastAndroid,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -65,7 +66,17 @@ export default function HomeScreen() {
       const clipboardText = await Clipboard.getString();
       console.log('Clipboard content:', clipboardText);
 
-      if (!clipboardText) return; // Exit if clipboard is empty
+      if (
+        !clipboardText ||
+        clipboardText.trim() === '' ||
+        clipboardText.match(/[^0-9+]/)
+      ) {
+        ToastAndroid.show(
+          'Clipboard is empty or contains invalid characters',
+          ToastAndroid.LONG
+        );
+        return; // Exit if clipboard is empty
+      }
 
       if (clipboardText.startsWith('+')) {
         const phoneRegex = /^(\+?\d{1,3})[\s-]?(\d{10,14})$/;
@@ -89,7 +100,6 @@ export default function HomeScreen() {
           console.log('No valid phone number found in clipboard');
         }
       } else {
-        console.log('here??');
         setPhoneNumber(clipboardText);
       }
     } catch (error) {
@@ -106,7 +116,7 @@ export default function HomeScreen() {
     return `${selectedCountry.code}${phoneNumber}`;
   };
 
-  const sendWhatsAppMessage = () => {
+  const sendWAMessage = () => {
     const fullNumber = getFullPhoneNumber();
     if (!isValidPhoneNumber(phoneNumber)) {
       Alert.alert('Invalid Number', 'Please enter a valid phone number');
@@ -143,9 +153,17 @@ export default function HomeScreen() {
     });
   };
 
+  const openDialer = () => {
+    const fullNumber = getFullPhoneNumber();
+    Linking.openURL(`tel:${fullNumber}`).catch((err) => {
+      console.error('Dialer open error:', err);
+      Alert.alert('Error', 'Could not open dialer');
+    });
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>QuickSend</Text>
+      <Text style={styles.title}>SendIt</Text>
 
       {/* Country Code Selector */}
       <View style={styles.countryInputContainer}>
@@ -195,12 +213,14 @@ export default function HomeScreen() {
         </TouchableOpacity>
       )}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.whatsappButton}
-          onPress={sendWhatsAppMessage}
-        >
+        <TouchableOpacity style={styles.callButton} onPress={openDialer}>
+          <Text style={styles.buttonText}>Call</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.whatsappButton} onPress={sendWAMessage}>
           <Text style={styles.buttonText}>WhatsApp</Text>
         </TouchableOpacity>
+
         <TouchableOpacity style={styles.smsButton} onPress={sendSMSMessage}>
           <Text style={styles.buttonText}>SMS</Text>
         </TouchableOpacity>
