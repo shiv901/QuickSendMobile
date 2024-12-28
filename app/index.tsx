@@ -1,10 +1,14 @@
+import {
+  openDialer,
+  sendSMSMessage,
+  sendWAMessage,
+} from '@/components/actions';
+import { sanitizeText } from '@/components/utils';
 import { COUNTRIES } from '@/constants/constants';
 import Clipboard from '@react-native-clipboard/clipboard';
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
   AppState,
-  Linking,
   PermissionsAndroid,
   Platform,
   Text,
@@ -13,7 +17,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { styles } from '../../styles/styles';
+import { styles } from '../styles/styles';
 
 export default function HomeScreen() {
   const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]); // Default India
@@ -66,11 +70,9 @@ export default function HomeScreen() {
       const clipboardText = await Clipboard.getString();
       console.log('Clipboard content:', clipboardText);
 
-      if (
-        !clipboardText ||
-        clipboardText.trim() === '' ||
-        clipboardText.match(/[^0-9+]/)
-      ) {
+      const cleanNumber = sanitizeText(clipboardText);
+
+      if (!cleanNumber || cleanNumber.match(/[^0-9+]/)) {
         ToastAndroid.show(
           'Clipboard is empty or contains invalid characters',
           ToastAndroid.LONG
@@ -78,9 +80,9 @@ export default function HomeScreen() {
         return; // Exit if clipboard is empty
       }
 
-      if (clipboardText.startsWith('+')) {
+      if (cleanNumber.startsWith('+')) {
         const phoneRegex = /^(\+?\d{1,3})[\s-]?(\d{10,14})$/;
-        const match = clipboardText.match(phoneRegex);
+        const match = cleanNumber.match(phoneRegex);
 
         if (match) {
           const [, countryCode = '', number] = match; // Extract groups
@@ -100,70 +102,22 @@ export default function HomeScreen() {
           console.log('No valid phone number found in clipboard');
         }
       } else {
-        setPhoneNumber(clipboardText);
+        setPhoneNumber(cleanNumber);
       }
     } catch (error) {
       console.error('Clipboard access error:', error);
     }
   };
 
-  const isValidPhoneNumber = (number: string): boolean => {
-    const phoneRegex = /^[0-9]{10}$/; // 10 digit validation for India
-    return phoneRegex.test(number);
-  };
-
-  const getFullPhoneNumber = () => {
-    return `${selectedCountry.code}${phoneNumber}`;
-  };
-
-  const sendWAMessage = () => {
-    const fullNumber = getFullPhoneNumber();
-    if (!isValidPhoneNumber(phoneNumber)) {
-      Alert.alert('Invalid Number', 'Please enter a valid phone number');
-      return;
+  function handlePhoneNumberChange(text: string): void {
+    if (text == '' || Number(text)) {
+      setPhoneNumber(text.trim());
     }
-
-    const whatsappUrl = `https://wa.me/${fullNumber.replace(/\D/g, '')}`;
-    Linking.openURL(whatsappUrl).catch((err) => {
-      console.error('WhatsApp open error:', err);
-      Alert.alert('Error', 'Could not open WhatsApp');
-    });
-  };
-
-  const sendSMSMessage = () => {
-    const fullNumber = getFullPhoneNumber();
-    if (!isValidPhoneNumber(phoneNumber)) {
-      Alert.alert('Invalid Number', 'Please enter a valid phone number');
-      return;
-    }
-
-    const smsUrl = Platform.select({
-      ios: `sms:${fullNumber}`,
-      android: `sms:${fullNumber}?body=`,
-    });
-
-    if (smsUrl === undefined) {
-      Alert.alert('Error', 'Could not open SMS app');
-      return;
-    }
-
-    Linking.openURL(smsUrl).catch((err) => {
-      console.error('SMS open error:', err);
-      Alert.alert('Error', 'Could not open SMS app');
-    });
-  };
-
-  const openDialer = () => {
-    const fullNumber = getFullPhoneNumber();
-    Linking.openURL(`tel:${fullNumber}`).catch((err) => {
-      console.error('Dialer open error:', err);
-      Alert.alert('Error', 'Could not open dialer');
-    });
-  };
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>SendIt</Text>
+      <Text style={styles.title}>SendIt 2.0</Text>
 
       {/* Country Code Selector */}
       <View style={styles.countryInputContainer}>
@@ -172,13 +126,13 @@ export default function HomeScreen() {
           onPress={() => setModalVisible(true)}
         >
           <Text>
-            {selectedCountry.flag} {selectedCountry.code}
+            {selectedCountry?.flag || '🌍'} {selectedCountry?.code || '+00'}
           </Text>
         </TouchableOpacity>
         <TextInput
           style={styles.input}
           value={phoneNumber}
-          onChangeText={setPhoneNumber}
+          onChangeText={handlePhoneNumberChange}
           placeholder='Phone Number'
           keyboardType='phone-pad'
           maxLength={10}
@@ -205,23 +159,33 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {clipboardPhoneNumber && (
+      {clipboardPhoneNumber ? (
         <TouchableOpacity onPress={checkClipboard}>
           <Text style={styles.clipboardText}>
-            Clipboard: {clipboardPhoneNumber}
+            Clipboard: {clipboardPhoneNumber || 'No phone number found'}
           </Text>
         </TouchableOpacity>
-      )}
+      ) : null}
+
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.callButton} onPress={openDialer}>
+        <TouchableOpacity
+          style={styles.callButton}
+          onPress={() => openDialer(selectedCountry, phoneNumber)}
+        >
           <Text style={styles.buttonText}>Call</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.whatsappButton} onPress={sendWAMessage}>
+        <TouchableOpacity
+          style={styles.whatsappButton}
+          onPress={() => sendWAMessage(selectedCountry, phoneNumber)}
+        >
           <Text style={styles.buttonText}>WhatsApp</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.smsButton} onPress={sendSMSMessage}>
+        <TouchableOpacity
+          style={styles.smsButton}
+          onPress={() => sendSMSMessage(selectedCountry, phoneNumber)}
+        >
           <Text style={styles.buttonText}>SMS</Text>
         </TouchableOpacity>
       </View>
