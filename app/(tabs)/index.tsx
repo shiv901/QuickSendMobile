@@ -17,7 +17,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { styles } from '../styles/styles';
+import { styles } from '../../styles/styles';
 
 export default function HomeScreen() {
   const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]); // Default India
@@ -118,6 +118,10 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>SendIt 2.0</Text>
+      <Text style={styles.subtitle}>Send WhatsApp without saving number.</Text>
+      <Text style={styles.caption}>
+        Number will automatically pasted form clipboard
+      </Text>
 
       {/* Country Code Selector */}
       <View style={styles.countryInputContainer}>

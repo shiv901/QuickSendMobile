@@ -10,6 +10,17 @@ export const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     textAlign: 'center',
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#333',
+  },
+  caption: {
+    fontSize: 12,
+    textAlign: 'center',
+    color: '#777',
     marginBottom: 20,
   },
   countryInputContainer: {
